@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import sys
-import itertools as it
 """
 https://adventofcode.com/2020/day/1#part2
 You need you to find three entries that sum to 2020 and then
