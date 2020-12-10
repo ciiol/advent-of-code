@@ -6,10 +6,13 @@
 -- the adapters to connect the charging outlet to your device?
 
 import qualified Text.ParserCombinators.Parsec.Token as P
+import qualified Data.Sequence as S
 import Text.ParserCombinators.Parsec (Parser, many, parse)
 import Text.Parsec.Language (emptyDef)
 import System.Exit (exitFailure)
-import Data.List (sort, subsequences)
+import Data.List (sort)
+import Data.Sequence (Seq(Empty), (|>), dropWhileL, takeWhileR)
+import Data.Foldable (toList)
 
 intsParser :: Parser [Int]
 intsParser = many intParser
@@ -21,32 +24,16 @@ intParser = do
 
 lexer = P.makeTokenParser emptyDef
 
-diffs :: [Int] -> [Int]
-diffs list = map diff $ zip (tail list) list
-  where
-    diff (a, b) = a - b
-
 addBorders :: [Int] -> [Int]
-addBorders nums = [((minimum nums) - 1)] ++ nums ++ [(3 + (maximum nums))]
+addBorders nums = 0 : (3 + (maximum nums)) : nums
 
-isValid :: [Int] -> Bool
-isValid nums = all (< 4) $ diffs nums
-
-validSubsequencesNaive :: [Int] -> Int
-validSubsequencesNaive nums = length $ filter isValid $ subsequences' nums
+pathCounts :: [Int] -> Int
+pathCounts = snd . head . toList . S.reverse . foldl pathCounts' Empty
   where
-    subsequences' s = map (addRest s) $ subsequences $ tail $ init s
-    addRest s x = [(head s)] ++ x ++ [(last s)]
-
-validSubsequencesBrute :: [Int] -> Int
-validSubsequencesBrute nums = foldr (*) 1 $ map validSubsequencesNaive $ intervals nums
-
-intervals :: [Int] -> [[Int]]
-intervals nums = intervals' $ zip (tail nums) (diffs nums)
-  where
-    intervals' [] = []
-    intervals' s = (addBorders $ map fst $ takeWhile ((== 1) . snd) s) : (intervals' $ rest s)
-    rest s = dropWhile ((== 3) . snd) $ dropWhile ((== 1) . snd) s
+    pathCounts' Empty x = Empty |> (x, 1)
+    pathCounts' acc x = (shrink x acc) |> (x, (sum $ possiblePathCounts x acc))
+    possiblePathCounts x = (map snd) . toList . takeWhileR ((>= x - 3) . fst)
+    shrink current = dropWhileL ((< current - 3) . fst)
 
 parseInput :: Parser a -> IO a
 parseInput parser = parseInput' parser >>= either report return
@@ -61,4 +48,4 @@ parseInput parser = parseInput' parser >>= either report return
 main :: IO ()
 main = do
   nums <- parseInput intsParser
-  putStrLn $ show $ validSubsequencesBrute $ sort $ addBorders nums
+  putStrLn $ show $ pathCounts $ sort $ addBorders nums
