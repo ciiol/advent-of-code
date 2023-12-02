@@ -13,16 +13,19 @@
 // spelled out with letters: one, two, three, four, five, six, seven, eight,
 // and nine also count as valid "digits".
 
+extern crate advent_of_code_2023 as advent;
+
+use std::fs::File;
+use std::io::{Error, Read};
+
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take};
 use nom::character::complete::satisfy;
-use nom::combinator::{all_consuming, map, peek, value};
-use nom::error::ParseError;
+use nom::combinator::{map, peek, value};
 use nom::multi::many1;
-use nom::{Finish, IResult, InputLength};
-use std::fmt::Display;
-use std::fs::File;
-use std::io::{Error, ErrorKind, Read};
+use nom::IResult;
+
+use advent::parser::parse;
 
 #[derive(Debug, Clone, PartialEq)]
 enum Item {
@@ -87,18 +90,6 @@ fn item(input: &str) -> IResult<&str, Item> {
     let (input, result) = peek(parser)(input)?;
     let (rest, _) = take(1usize)(input)?;
     Ok((rest, result))
-}
-
-fn parse<I, T, E: ParseError<I>, F>(val: I, parser: F) -> Result<T, Error>
-where
-    F: Fn(I) -> IResult<I, T, E>,
-    E: Display,
-    I: InputLength,
-{
-    match all_consuming(parser)(val).finish() {
-        Ok((_remaining, result)) => Ok(result),
-        Err(err) => Err(Error::new(ErrorKind::Other, format!("{err}"))),
-    }
 }
 
 #[cfg(test)]
