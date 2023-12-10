@@ -1,6 +1,6 @@
 use ndarray::Array2;
 use std::collections::HashSet;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 pub type Coord = (usize, usize);
 
@@ -92,7 +92,7 @@ impl<T> Matrix<T> {
         let (row, col) = coord;
         let col: isize = col.try_into().unwrap();
         let row: isize = row.try_into().unwrap();
-        let cols: isize = self.rows.try_into().unwrap();
+        let cols: isize = self.cols.try_into().unwrap();
         let rows: isize = self.rows.try_into().unwrap();
         (-1..=1)
             .flat_map(|d_row| (-1..=1).map(move |d_col| (d_row, d_col)))
@@ -107,5 +107,20 @@ impl<T> Matrix<T> {
                     ))
                 }
             })
+    }
+}
+
+impl<T> Display for Matrix<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                write!(f, "{}", self.get((row, col)).unwrap())?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
     }
 }
