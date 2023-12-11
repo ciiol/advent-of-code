@@ -1,6 +1,7 @@
-use ndarray::Array2;
 use std::collections::HashSet;
 use std::fmt::{Debug, Display};
+
+use ndarray::{Array2, ArrayView1};
 
 pub type Coord = (usize, usize);
 
@@ -30,11 +31,11 @@ impl<T> Matrix<T> {
         self.data.get_mut(coord)
     }
 
-    pub fn rows(&self) -> usize {
+    pub fn rows_size(&self) -> usize {
         self.rows
     }
 
-    pub fn cols(&self) -> usize {
+    pub fn cols_size(&self) -> usize {
         self.cols
     }
 
@@ -44,6 +45,14 @@ impl<T> Matrix<T> {
 
     pub fn iter(&self) -> impl Iterator<Item = (Coord, &T)> + '_ {
         self.coords().zip(self.data.iter())
+    }
+
+    pub fn rows(&self) -> impl Iterator<Item = ArrayView1<T>> + '_ {
+        self.data.axis_iter(ndarray::Axis(0))
+    }
+
+    pub fn cols(&self) -> impl Iterator<Item = ArrayView1<T>> + '_ {
+        self.data.axis_iter(ndarray::Axis(1))
     }
 
     pub fn search<'a, P>(&'a self, predicate: P) -> impl Iterator<Item = Coord> + 'a
