@@ -128,7 +128,9 @@ where
             for col in 0..self.cols {
                 write!(f, "{}", self.get((row, col)).unwrap())?;
             }
-            writeln!(f)?;
+            if row < self.rows - 1 {
+                writeln!(f)?;
+            }
         }
         Ok(())
     }
