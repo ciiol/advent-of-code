@@ -5,7 +5,7 @@ use ndarray::{Array2, ArrayView1};
 
 pub type Coord = (usize, usize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Matrix<T> {
     rows: usize,
     cols: usize,
