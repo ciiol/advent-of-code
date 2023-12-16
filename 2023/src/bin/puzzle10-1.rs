@@ -70,15 +70,6 @@ fn puzzle(input: &Sketch) -> usize {
         .0
 }
 
-fn add_direction(coord: Coord, direction: (isize, isize)) -> Coord {
-    let (row, col) = coord;
-    let row: isize = row.try_into().unwrap();
-    let col: isize = col.try_into().unwrap();
-    let row = row + direction.0;
-    let col = col + direction.1;
-    (row.try_into().unwrap(), col.try_into().unwrap())
-}
-
 fn tile_to_direction(tile: &Tile) -> impl Iterator<Item = (isize, isize)> + '_ {
     match tile {
         Tile::Vertical => vec![(1, 0), (-1, 0)].into_iter(),
@@ -101,7 +92,7 @@ fn is_opposite_direction(direction1: (isize, isize), direction2: (isize, isize))
 fn next_tiles(coord: Coord, sketch: &Sketch) -> impl Iterator<Item = Coord> + '_ {
     let tile = sketch.get(coord).unwrap();
     tile_to_direction(tile).filter_map(move |direction| {
-        let next_coord = add_direction(coord, direction);
+        let next_coord = (coord + direction.into()).unwrap();
         let next_tile = sketch.get(next_coord).unwrap();
         if tile_to_direction(next_tile).any(|d| is_opposite_direction(d, direction)) {
             Some(next_coord)

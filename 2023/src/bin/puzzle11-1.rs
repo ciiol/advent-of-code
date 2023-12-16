@@ -81,23 +81,16 @@ fn expanding_indexes<'a>(array: &'a [ArrayView1<'a, Pixel>]) -> impl Iterator<It
 }
 
 fn distance(a: Coord, b: Coord, expanding_rows: &[usize], expanding_cols: &[usize]) -> usize {
-    let a_row: isize = a.0.try_into().unwrap();
-    let a_col: isize = a.1.try_into().unwrap();
-    let b_row: isize = b.0.try_into().unwrap();
-    let b_col: isize = b.1.try_into().unwrap();
-    let row_distance: usize = (a_row - b_row).abs().try_into().unwrap();
-    let col_distance: usize = (a_col - b_col).abs().try_into().unwrap();
-    let distance = row_distance + col_distance;
     let expanded_rows = expanding_rows
         .iter()
-        .filter(|i| **i >= min(a.0, b.0) && **i <= max(a.0, b.0))
+        .filter(|i| **i >= min(a.row, b.row) && **i <= max(a.row, b.row))
         .count();
     let expanded_cols = expanding_cols
         .iter()
-        .filter(|i| **i >= min(a.1, b.1) && **i <= max(a.1, b.1))
+        .filter(|i| **i >= min(a.col, b.col) && **i <= max(a.col, b.col))
         .count();
     let multiplying_factor = 2;
-    distance + (multiplying_factor - 1) * (expanded_cols + expanded_rows)
+    (a - b).manhattan_distance() + (multiplying_factor - 1) * (expanded_cols + expanded_rows)
 }
 
 #[cfg(test)]

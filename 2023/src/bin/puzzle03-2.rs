@@ -55,7 +55,7 @@ fn puzzle_input(input: &str) -> IResult<&str, Matrix<Item>> {
 
 fn puzzle(input: &Matrix<Item>) -> u32 {
     let gears = input.search(|v| matches!(v, Item::Symbol('*')));
-    let next_coords = |c @ (x, _): Coord| input.neighbours8(c).filter(move |&(nx, _)| nx == x);
+    let next_coords = |c: Coord| input.neighbours8(c).filter(move |nc| nc.row == c.row);
     let is_digit = |c: &Coord| input.get(*c).unwrap().is_digit();
     let start_points: Vec<Vec<Coord>> = gears
         .map(|c| input.neighbours8(c).filter(is_digit).collect())

@@ -1,9 +1,20 @@
 use std::collections::HashSet;
 use std::fmt::{Debug, Display};
+use std::ops::{Add, Sub};
 
 use ndarray::{Array2, ArrayView1};
 
-pub type Coord = (usize, usize);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Coord {
+    pub row: usize,
+    pub col: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Direction {
+    pub row: isize,
+    pub col: isize,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Matrix<T> {
@@ -24,11 +35,11 @@ impl<T> Matrix<T> {
     }
 
     pub fn get(&self, coord: Coord) -> Option<&T> {
-        self.data.get(coord)
+        self.data.get(coord.into_tuple())
     }
 
     pub fn get_mut(&mut self, coord: Coord) -> Option<&mut T> {
-        self.data.get_mut(coord)
+        self.data.get_mut(coord.into_tuple())
     }
 
     pub fn rows_size(&self) -> usize {
@@ -40,7 +51,7 @@ impl<T> Matrix<T> {
     }
 
     pub fn coords(&self) -> impl Iterator<Item = Coord> + '_ {
-        (0..self.rows).flat_map(|row| (0..self.cols).map(move |col| (row, col)))
+        (0..self.rows).flat_map(|row| (0..self.cols).map(move |col| (row, col).into()))
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (Coord, &T)> + '_ {
@@ -98,24 +109,26 @@ impl<T> Matrix<T> {
     }
 
     pub fn neighbours8(&self, coord: Coord) -> impl Iterator<Item = Coord> + '_ {
-        let (row, col) = coord;
-        let col: isize = col.try_into().unwrap();
-        let row: isize = row.try_into().unwrap();
-        let cols: isize = self.cols.try_into().unwrap();
-        let rows: isize = self.rows.try_into().unwrap();
         (-1..=1)
             .flat_map(|d_row| (-1..=1).map(move |d_col| (d_row, d_col)))
             .filter(|(d_row, d_col)| *d_row != 0 || *d_col != 0)
             .filter_map(move |(d_row, d_col)| {
-                if (row < -d_row) || (col < -d_col) || d_row >= rows - row || d_col >= cols - col {
-                    None
-                } else {
-                    Some((
-                        (row + d_row).try_into().unwrap(),
-                        (col + d_col).try_into().unwrap(),
-                    ))
-                }
+                let d = Direction {
+                    row: d_row,
+                    col: d_col,
+                };
+                (coord + d).and_then(|coord| {
+                    if self.is_inside(coord) {
+                        Some(coord)
+                    } else {
+                        None
+                    }
+                })
             })
+    }
+
+    pub fn is_inside(&self, coord: Coord) -> bool {
+        (coord.row < self.rows) && (coord.col < self.cols)
     }
 }
 
@@ -126,12 +139,151 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in 0..self.rows {
             for col in 0..self.cols {
-                write!(f, "{}", self.get((row, col)).unwrap())?;
+                write!(f, "{}", self.get((row, col).into()).unwrap())?;
             }
             if row < self.rows - 1 {
                 writeln!(f)?;
             }
         }
         Ok(())
+    }
+}
+
+impl Coord {
+    pub fn into_tuple(self) -> (usize, usize) {
+        (self.row, self.col)
+    }
+}
+
+impl From<(usize, usize)> for Coord {
+    fn from((row, col): (usize, usize)) -> Self {
+        Self { row, col }
+    }
+}
+
+impl TryFrom<Direction> for Coord {
+    type Error = &'static str;
+
+    fn try_from(direction: Direction) -> Result<Self, Self::Error> {
+        if direction.row < 0 || direction.col < 0 {
+            Err("Negative coordinates")
+        } else {
+            Ok(Self {
+                row: direction.row.try_into().unwrap(),
+                col: direction.col.try_into().unwrap(),
+            })
+        }
+    }
+}
+
+impl Direction {
+    pub fn left() -> Self {
+        Self { row: 0, col: -1 }
+    }
+
+    pub fn right() -> Self {
+        Self { row: 0, col: 1 }
+    }
+
+    pub fn up() -> Self {
+        Self { row: -1, col: 0 }
+    }
+
+    pub fn down() -> Self {
+        Self { row: 1, col: 0 }
+    }
+
+    pub fn into_tuple(self) -> (isize, isize) {
+        (self.row, self.col)
+    }
+
+    #[must_use]
+    pub fn rotate_left(self) -> Self {
+        Self {
+            row: -self.col,
+            col: self.row,
+        }
+    }
+
+    #[must_use]
+    pub fn rotate_right(self) -> Self {
+        Self {
+            row: self.col,
+            col: -self.row,
+        }
+    }
+
+    pub fn is_horizontal(self) -> bool {
+        self.row == 0
+    }
+
+    pub fn is_vertical(self) -> bool {
+        self.col == 0
+    }
+
+    pub fn manhattan_distance(self) -> usize {
+        (self.row.abs() + self.col.abs()).try_into().unwrap()
+    }
+}
+
+impl From<(isize, isize)> for Direction {
+    fn from((row, col): (isize, isize)) -> Self {
+        Self { row, col }
+    }
+}
+
+impl From<Coord> for Direction {
+    fn from(coord: Coord) -> Self {
+        Self {
+            row: coord.row.try_into().unwrap(),
+            col: coord.col.try_into().unwrap(),
+        }
+    }
+}
+
+impl Add<Direction> for Direction {
+    type Output = Self;
+
+    fn add(self, other: Direction) -> Self::Output {
+        Self {
+            row: self.row + other.row,
+            col: self.col + other.col,
+        }
+    }
+}
+
+impl Add<Direction> for Coord {
+    type Output = Option<Self>;
+
+    fn add(self, direction: Direction) -> Self::Output {
+        let coord: Direction = self.into();
+        (coord + direction).try_into().ok()
+    }
+}
+
+impl Add<Direction> for Option<Coord> {
+    type Output = Option<Coord>;
+
+    fn add(self, other: Direction) -> Self::Output {
+        self.and_then(|coord| coord + other)
+    }
+}
+
+impl Sub<Direction> for Direction {
+    type Output = Direction;
+
+    fn sub(self, other: Direction) -> Self::Output {
+        Self {
+            row: self.row - other.row,
+            col: self.col - other.col,
+        }
+    }
+}
+
+impl Sub<Coord> for Coord {
+    type Output = Direction;
+
+    fn sub(self, other: Coord) -> Self::Output {
+        Direction::from(self) - Direction::from(other)
     }
 }

@@ -82,8 +82,7 @@ fn is_vertically_reflected_from(row: usize, field: &Field) -> bool {
     field
         .iter()
         .filter(|(coord, tile)| {
-            let (coord_row, _col) = *coord;
-            if coord_row >= row {
+            if coord.row >= row {
                 return false;
             }
             if let Some(mirrored) = mirror_from_row(*coord, row, field) {
@@ -100,8 +99,7 @@ fn is_horizontally_reflected_from(col: usize, field: &Field) -> bool {
     field
         .iter()
         .filter(|(coord, tile)| {
-            let (_row, coord_col) = *coord;
-            if coord_col >= col {
+            if coord.col >= col {
                 return false;
             }
             if let Some(mirrored) = mirror_from_col(*coord, col, field) {
@@ -115,29 +113,27 @@ fn is_horizontally_reflected_from(col: usize, field: &Field) -> bool {
 }
 
 fn mirror_from_row(coord: Coord, mirror: usize, field: &Field) -> Option<Coord> {
-    let (coord_row, col) = coord;
-    assert!(coord_row < mirror);
+    assert!(coord.row < mirror);
     let mirror: isize = mirror.try_into().unwrap();
-    let coord_row: isize = coord_row.try_into().unwrap();
+    let coord_row: isize = coord.row.try_into().unwrap();
     let mirrored = mirror + (mirror - coord_row - 1);
     let mirrored: usize = mirrored.try_into().unwrap();
     if mirrored >= field.rows_size() {
         return None;
     }
-    Some((mirrored, col))
+    Some((mirrored, coord.col).into())
 }
 
 fn mirror_from_col(coord: Coord, mirror: usize, field: &Field) -> Option<Coord> {
-    let (row, coord_col) = coord;
-    assert!(coord_col < mirror);
+    assert!(coord.col < mirror);
     let mirror: isize = mirror.try_into().unwrap();
-    let coord_col: isize = coord_col.try_into().unwrap();
+    let coord_col: isize = coord.col.try_into().unwrap();
     let mirrored = mirror + (mirror - coord_col - 1);
     let mirrored: usize = mirrored.try_into().unwrap();
     if mirrored >= field.cols_size() {
         return None;
     }
-    Some((row, mirrored))
+    Some((coord.row, mirrored).into())
 }
 
 #[cfg(test)]

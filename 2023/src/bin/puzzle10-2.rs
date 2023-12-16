@@ -113,7 +113,7 @@ fn puzzle(input: &Sketch) -> usize {
     let start_tile = input.search(|tile| *tile == Tile::Start).next().unwrap();
     let start = find_loop_start(start_tile, input);
     let start_loop: HashSet<Coord> = walk(start, input).collect();
-    let outside = flood_fill((0, 0), &start_loop, input);
+    let outside = flood_fill((0, 0).into(), &start_loop, input);
     let inside = input.iter().filter_map(|(coord, _)| {
         if outside.contains(&coord) || start_loop.contains(&coord) {
             None
@@ -142,12 +142,11 @@ fn find_loop_start(start: Coord, sketch: &Sketch) -> Coord {
 }
 
 fn add_direction(coord: Coord, direction: (isize, isize)) -> Coord {
-    let (row, col) = coord;
-    let row: isize = row.try_into().unwrap();
-    let col: isize = col.try_into().unwrap();
+    let row: isize = coord.row.try_into().unwrap();
+    let col: isize = coord.col.try_into().unwrap();
     let row = row + direction.0;
     let col = col + direction.1;
-    (row.try_into().unwrap_or(0), col.try_into().unwrap_or(0))
+    (row.try_into().unwrap_or(0), col.try_into().unwrap_or(0)).into()
 }
 
 fn tile_to_direction(tile: &Tile) -> impl Iterator<Item = (isize, isize)> + '_ {
