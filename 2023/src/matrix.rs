@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::fmt::{Debug, Display};
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 use ndarray::{Array2, ArrayView1};
 
@@ -285,5 +285,16 @@ impl Sub<Coord> for Coord {
 
     fn sub(self, other: Coord) -> Self::Output {
         Direction::from(self) - Direction::from(other)
+    }
+}
+
+impl Mul<isize> for Direction {
+    type Output = Direction;
+
+    fn mul(self, multiplier: isize) -> Self::Output {
+        Self {
+            row: self.row * multiplier,
+            col: self.col * multiplier,
+        }
     }
 }
