@@ -127,6 +127,24 @@ impl<T> Matrix<T> {
             })
     }
 
+    pub fn neighbours4(&self, coord: Coord) -> impl Iterator<Item = Coord> + '_ {
+        let directions = vec![
+            Direction::left(),
+            Direction::right(),
+            Direction::up(),
+            Direction::down(),
+        ];
+        directions.into_iter().filter_map(move |d| {
+            (coord + d).and_then(|coord| {
+                if self.is_inside(coord) {
+                    Some(coord)
+                } else {
+                    None
+                }
+            })
+        })
+    }
+
     pub fn is_inside(&self, coord: Coord) -> bool {
         (coord.row < self.rows) && (coord.col < self.cols)
     }
